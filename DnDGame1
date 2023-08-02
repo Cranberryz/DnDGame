@@ -1,0 +1,232 @@
+/* 
+*/
+
+#include <iostream>
+#include <array>
+#include <random>
+#include <string>
+
+std::random_device dev;
+std::mt19937 rng(dev());
+
+std::uniform_int_distribution<std::mt19937::result_type> four(1, 4);
+std::uniform_int_distribution<std::mt19937::result_type> six(1, 6);
+std::uniform_int_distribution<std::mt19937::result_type> eight(1, 8);
+std::uniform_int_distribution<std::mt19937::result_type> ten(1, 10);
+std::uniform_int_distribution<std::mt19937::result_type> twelve(1, 12);
+std::uniform_int_distribution<std::mt19937::result_type> twenty(1, 20);
+
+class Dragon
+{
+public:
+	int health{};
+	int initiative{};
+};
+
+class Player
+{
+public: 
+	int weapon{};
+	int health{};
+	int initiative{};
+};
+
+struct Dice
+{
+	int d4{};
+	int d6{};
+	int d8{};
+	int d10{};
+	int d12{};
+	int d20{};
+};
+
+void roll(int x)
+{
+	std::cout << "You rolled a " << x << "\n";
+}
+
+bool initiative(int x, int y)
+{
+	std::string enter;
+
+	std::cout << "Please type 'Roll' to roll for Initiative. \n";
+	std::cin >> enter;
+	std::cout << " - - - - - - - - - - - - - - - - - - - - - - - \n";
+
+	if (x >= y)
+	{
+		std::cout << "You rolled a: " << x << " and beat the Dragon's roll of: " << y << "\n";
+		std::cout << " - - - - - - - - - - - - - - - - - - - - - - - \n";
+		return true;
+	}
+	if (x < y)
+	{
+		std::cout << "The Dragon rolled a: " << y << " and beat your roll of: " << x << "\n";
+		std::cout << " - - - - - - - - - - - - - - - - - - - - - - - \n";
+		return false;
+	}
+}
+
+int drag(int x)
+{
+	int attack = twenty(rng);
+
+	x -= attack;
+
+	std::cout << "Dragon deals: " << attack << " damage\n";
+	std::cout << "Player's HP is now: " << x << "\n";
+
+	return x;
+}
+
+int weapons()
+{
+	std::string x;
+
+	std::cout << "Choose your weapon: \n";
+	std::cout << "Weapons: [Dagger | Shortsword | Longsword]\n";
+	std::cout << "What is your weapon of choice?\n";
+	std::cin >> x;
+	std::cout << "\n";
+
+	if (x == "dagger")
+	{
+		return 4;
+	}
+	else if (x == "shortsword")
+	{
+		return 6;
+	}
+	else if (x == "longsword")
+	{
+		return 12;
+	}
+
+}
+
+int sDice(int x)
+{
+	Dice dice;
+
+	dice.d4 = four(rng);
+	dice.d6 = six(rng);
+	dice.d8 = eight(rng);
+	dice.d10 = ten(rng);
+	dice.d12 = twelve(rng);
+	dice.d20 = twenty(rng);
+
+	switch (x)
+	{
+	case 4:
+		x = dice.d4;
+		return x;
+	case 6:
+		x = dice.d6;
+		return x;
+	case 8:
+		x = dice.d8;
+		return x;
+	case 10:
+		x = dice.d10;
+		return x;
+	case 12:
+		x = dice.d12;
+		return x;
+	case 20:
+		x = dice.d20;
+		return x;
+	}
+}
+
+int numDice(int x)
+{
+	switch (x)
+	{
+	case 4:
+		return 4;
+	case 6:
+		return 3;
+	case 12:
+		return 2;
+	}
+}
+
+int playerTurn(int x, int y, int z)
+{
+
+	int count = 0;
+
+	for (count; count < x; count++)
+	{
+		int dice = sDice(z);
+		roll(dice);
+		y = y - dice;
+	}
+	return y;
+}
+
+
+void game()
+{
+	Player player{ weapons(), 50, twenty(rng) };
+	Dragon dragon{ 50, twenty(rng) };
+
+	bool isDrag = true;
+	int sides = player.weapon;
+	int num = numDice(sides);
+	bool init = initiative(player.initiative, dragon.initiative);
+	std::string enter;
+
+	while (isDrag)
+	{
+		if (!init)
+		{
+			player.health = drag(player.health);
+			std::cout << " - - - - - - - - - - - - - - - - - - - - - - - \n";
+			dragon.health = playerTurn(num, dragon.health, sides);
+			std::cout << "Dragon's HP is now: " << dragon.health << "\n";
+			std::cout << " - - - - - - - - - - - - - - - - - - - - - - - \n";
+		}
+		else
+		{
+			dragon.health = playerTurn(num, dragon.health, sides);
+			std::cout << "Dragon's HP is now: " << dragon.health << "\n";
+			std::cout << " - - - - - - - - - - - - - - - - - - - - - - - \n";
+
+			player.health = drag(player.health);
+			std::cout << " - - - - - - - - - - - - - - - - - - - - - - - \n";
+		}
+
+		if (player.health > 0 && dragon.health > 0)
+		{
+			std::cout << "Type 'Roll' to start the turn.\n";
+			std::cin >> enter;
+			std::cout << "\n";
+		}
+
+		if (dragon.health <= 0)
+		{
+			std::cout << "Dragon's HP is now: " << dragon.health << "\n";
+			std::cout << " - - - - - - - - - - - - - - - - - - - - - - - \n";
+			std::cout << "\nYou have slain the dragon!\n";
+			isDrag = false;
+			break;
+		}
+		if (player.health <= 0)
+		{
+			std::cout << "You have been slain by the Dragon\n";
+			std::cout << " - - - - - - - - - - - - - - - - - - - - - - - \n";
+			isDrag = false;
+			break;
+		}
+	}
+}
+
+int main()
+{
+	std::cout << "You approach a Dragon!\nYou engage in combat!\n";
+	std::cout << " - - - - - - - - - - - - - - - - - - - - - - - \n";
+	
+	game();
+}
